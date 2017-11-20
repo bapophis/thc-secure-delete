@@ -1,5 +1,3 @@
-percentage output
-
 sfill - no mktemp()
 
 just take some random data and then use twofish to generate a random stream
