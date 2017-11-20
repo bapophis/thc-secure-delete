@@ -22,16 +22,16 @@ sdel-lib.o: sdel-lib.c
 	$(CC) ${OPT} -c sdel-lib.c
 
 srm: srm.c
-	$(CC) ${OPT} -o srm srm.c sdel-lib.o
+	$(CC) ${OPT} -o srm srm.c sdel-lib.o -lm
 	-strip srm
 sfill: sfill.c
-	$(CC) ${OPT} -o sfill sfill.c sdel-lib.o
+	$(CC) ${OPT} -o sfill sfill.c sdel-lib.o -lm
 	-strip sfill
 sswap: sswap.c
-	$(CC) ${OPT} -o sswap sswap.c sdel-lib.o
+	$(CC) ${OPT} -o sswap sswap.c sdel-lib.o -lm
 	-strip sswap
 sdmem: smem.c
-	$(CC) ${OPT} -o sdmem smem.c sdel-lib.o
+	$(CC) ${OPT} -o sdmem smem.c sdel-lib.o -lm
 	-strip sdmem
 
 clean:

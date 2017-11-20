@@ -130,6 +130,41 @@ void sdel_finnish() {
     __internal_sdel_init = 0;
 }
 
+void printProgress(int counter, int writes){
+	double progress = ((double)counter/(double)writes)*1.0;
+	if (progress>0.0 && progress<=1.0){
+		int termwidth=50;
+		int progpos=termwidth*progress;
+		printf("first pass:[");
+		for (int progi=0; progi<termwidth; progi++){
+			if (progi<progpos)printf("=");
+			else if (progi==progpos)printf(">");
+			else printf(" ");
+		}
+		printf("]%i%%\r", (int)floor(progress*100.0));
+		fflush(stdout);
+	}
+}
+
+void printProgress2(int counter, int writes, int turn){
+	double progress = ((double)counter/(double)writes)*1.0;
+	if (progress>0.0 && progress<=1.0){
+		int termwidth=50;
+		int progpos = termwidth*progress;
+		if(turn<10)printf("pass:%i [", turn);
+		else printf("pass:%i[", turn);
+		for (int progi = 0; progi<termwidth; progi++){
+			if (progi < progpos)printf("=");
+			else if (progi==progpos)printf(">");
+			else printf(" ");
+		}
+		int progout = (int)floor(progress*100.0);
+		if(progout<10)printf("]%i%% \r",progout);
+		else printf("]%i%%\r", progout);
+		fflush(stdout);
+	}
+}
+
 /*
  * secure_overwrite function parameters:
  * mode = 0 : once overwrite with random data
@@ -163,8 +198,9 @@ int sdel_overwrite(int mode, int fd, long start, unsigned long bufsize, unsigned
         writes = 0;
 
 /* do the first overwrite */
+	if(verbose)printf("\n");
     if (start == 0)
-        rewind(f);
+		rewind(f);
     else
         if (fseek(f, start, SEEK_SET) != 0)
             return -1;
@@ -174,13 +210,15 @@ int sdel_overwrite(int mode, int fd, long start, unsigned long bufsize, unsigned
         else
             __sdel_fill_buf((char *)std_array_ff, bufsize, buf);
         if (writes > 0)
-            for (counter=1; counter<=writes; counter++)
+            for (counter=1; counter<=writes; counter++){
                 fwrite(&buf, 1, bufsize, f); // dont care for errors
+
+				if(verbose) printProgress(counter,writes);
+			}
         else
             do {} while(fwrite(&buf, 1, bufsize, f) == bufsize);
-        if (verbose)
-            printf("*");
         fflush(f);
+		if(verbose)printf("\n");
         if (fsync(fd) < 0)
             FLUSH;
         if (mode == 0)
@@ -199,8 +237,10 @@ int sdel_overwrite(int mode, int fd, long start, unsigned long bufsize, unsigned
         if ((turn >= 5) && (turn <= 31)) {
             __sdel_fill_buf((char *)write_modes[turn-5], bufsize, buf);
             if (writes > 0)
-                for (counter = 1; counter <= writes; counter++)
+                for (counter = 1; counter <= writes; counter++){
                     fwrite(&buf, 1, bufsize, f); // dont care for errors
+					if(verbose) printProgress2(counter,writes,turn);
+				}
             else
                 do {} while(fwrite(&buf, 1, bufsize, f) == bufsize);
         } else {
@@ -213,19 +253,19 @@ int sdel_overwrite(int mode, int fd, long start, unsigned long bufsize, unsigned
 	            if (! last)
                         __sdel_random_buf(bufsize, buf);
 	            fwrite(&buf, 1, bufsize, f); // dont care for errors
+				if(verbose) printProgress2(counter,writes,turn);
 	        }
 	    } else {
 	        do {
-	            if (! last)
+	            if (! last){
                         __sdel_random_buf(bufsize, buf);
+			if(verbose) printProgress2(counter,writes,turn);}
 	        } while (fwrite(&buf, 1, bufsize, f) == bufsize); // dont care for errors
 	    }
         }
         fflush(f);
         if (fsync(fd) < 0)
             FLUSH;
-        if (verbose)
-            printf("*");
     }
 
     (void) fclose(f);
@@ -285,7 +325,7 @@ int sdel_unlink(char *filename, int directory, int truncate, int slow) {
 	    (void) rename(newname, filename);
 	} else
 	    if (verbose)
-	        printf("Removed directory %s ...", filename);
+	        printf("\nRemoved directory %s ...", filename);
     } else {
         result = unlink(newname);
         if (result) {
@@ -294,7 +334,7 @@ int sdel_unlink(char *filename, int directory, int truncate, int slow) {
             (void) rename(newname, filename);
         } else
             if (verbose)
-                printf(" Removed file %s ...", filename);
+                printf("\nRemoved file %s ...", filename);
     }
 
     if (result != 0)
